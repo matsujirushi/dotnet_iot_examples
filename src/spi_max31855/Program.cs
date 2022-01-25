@@ -23,6 +23,7 @@ double Max31855ReadThermocoupleTemperature()
 
     Span<byte> readDataThermocouple = stackalloc byte[] { readData[0], readData[1], };
     if (BitConverter.IsLittleEndian) MemoryExtensions.Reverse(readDataThermocouple);
+
     return (double)(BitConverter.ToInt16(readDataThermocouple) >> 2) / 4;
 }
 
