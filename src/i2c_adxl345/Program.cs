@@ -21,22 +21,32 @@ static double Adxl345OutputDataToG(short value) => value * 2.0 / (1 << (10 - 1))
 
 void Adxl345StartMeasurement()
 {
-    device.Write(new byte[] { 0x2d, 0x08, });
+    device.Write(stackalloc byte[] { 0x2d, 0x08, });
 }
 
 void Adxl345StopMeasurement()
 {
-    device.Write(new byte[] { 0x2d, 0x00, });
+    device.Write(stackalloc byte[] { 0x2d, 0x00, });
 }
 
 (double X, double Y, double Z) Adxl345ReadAcceleration()
 {
-    byte[] readData = new byte[6];
-    device.WriteRead(new byte[] { 0x32, }, readData);
+    Span<byte> readData = stackalloc byte[6];
+    device.WriteRead(stackalloc byte[] { 0x32, }, readData);
 
-    var x = BitConverter.ToInt16(readData, 0);
-    var y = BitConverter.ToInt16(readData, 2);
-    var z = BitConverter.ToInt16(readData, 4);
+    var readDataX = readData.Slice(0, 2);
+    var readDataY = readData.Slice(2, 2);
+    var readDataZ = readData.Slice(4, 2);
+    if (!BitConverter.IsLittleEndian)
+    {
+        MemoryExtensions.Reverse(readDataX);
+        MemoryExtensions.Reverse(readDataY);
+        MemoryExtensions.Reverse(readDataZ);
+    }
+
+    var x = BitConverter.ToInt16(readDataX);
+    var y = BitConverter.ToInt16(readDataY);
+    var z = BitConverter.ToInt16(readDataZ);
 
     return (Adxl345OutputDataToG(x), Adxl345OutputDataToG(y), Adxl345OutputDataToG(z));
 }
